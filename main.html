@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MindBridge</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.js"></script>
+  <style>
+    :root {
+      --main: #7b6cff; --main-light: #e0dfff; --bg: #f8f9fd; --text: #333; --sub: #666; --white: #fff; --border: #eee;
+    }
+    body.dark-mode {
+      --main: #9b8cff; --main-light: #2c2c2c; --bg: #121212; --text: #e0e0e0; --sub: #aaa; --white: #1e1e1e; --border: #333;
+    }
+    * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    body { margin: 0; background: var(--bg); color: var(--text); padding-bottom: 80px; transition: background 0.3s; }
+    
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+    .main-content { max-width: 600px; margin: 0 auto; padding: 20px; animation: fadeIn 0.5s ease; }
+    
+    .nav {
+      position: fixed; bottom: 0; left: 0; width: 100%; background: var(--white);
+      display: flex; justify-content: space-around; padding: 12px;
+      border-top: 1px solid var(--border); z-index: 1000;
+    }
+    .nav-item { text-align: center; color: var(--sub); font-size: 11px; cursor: pointer; transition: color 0.3s; }
+    .nav-item.active { color: var(--main); font-weight: bold; }
+    .nav-icon { font-size: 24px; display: block; margin-bottom: 4px; }
+    
+    .card { 
+      background: var(--white); padding: 20px; border-radius: 20px; 
+      box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 20px; 
+      animation: slideUp 0.4s ease-out; position: relative;
+    }
+    
+    .btn { 
+      background: var(--main); color: white; border: none; padding: 12px; 
+      border-radius: 12px; width: 100%; font-size: 15px; cursor: pointer; 
+      margin-top: 10px; font-weight: bold; transition: opacity 0.2s;
+    }
+    .btn:active { opacity: 0.8; }
+    
+    .mood-display { font-size: 35px; margin-right: 5px; }
+    .mood-btn { font-size: 28px; background: none; border: none; cursor: pointer; opacity: 0.4; transition: 0.2s; }
+    .mood-btn.active { transform: scale(1.4); opacity: 1; }
+
+    .file-upload-label {
+      display: block; width: 100%; padding: 15px; border: 2px dashed var(--border);
+      border-radius: 12px; text-align: center; color: var(--sub); cursor: pointer; margin: 10px 0;
+    }
+    input[type="file"] { display: none; }
+
+    .view-section { display: none; }
+    .view-section.active { display: block; }
+    
+    textarea, input[type="text"], input[type="date"], select {
+      width: 100%; padding: 12px; border-radius: 12px; border: 1px solid var(--border);
+      background: var(--bg); color: var(--text); margin-bottom: 10px; outline: none;
+    }
+
+    .modal-overlay {
+      display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.6); z-index: 2000; justify-content: center; align-items: center;
+    }
+    .modal-content {
+      background: var(--white); width: 90%; max-width: 400px; padding: 20px;
+      border-radius: 20px; max-height: 90vh; overflow-y: auto;
+    }
+
+    .user-row { padding: 12px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
+    .user-row:hover { background: var(--bg); }
+  </style>
+</head>
+<body>
+
+<div class="main-content">
+  <div id="notice-bar" style="display:none; background:#fff4e6; color:#d9480f; padding:15px; border-radius:15px; margin-bottom:20px; border-left:5px solid #ffa94d; font-weight:bold; justify-content:space-between; align-items:center;">
+    <span>📢 <span id="notice-text"></span></span>
+    <button id="notice-del-btn" style="display:none; background:none; border:none; color:#d9480f; cursor:pointer;" onclick="deleteNotice()">✕</button>
+  </div>
+
+  <div id="view-question" class="view-section active">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+      <h2 style="margin:0;">오늘의 질문</h2>
+      <div>
+        <button onclick="openHistory()" style="font-size:12px; padding:5px 10px; border-radius:15px; border:1px solid var(--border); background:var(--white); cursor:pointer;">🕒 기록</button>
+        <button onclick="toggleDarkMode()" style="background:none; border:none; font-size:20px; cursor:pointer;">🌙</button>
+      </div>
+    </div>
+    <div class="card" id="q-today">로딩 중...</div>
+  </div>
+
+  <div id="view-diary" class="view-section">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+      <h2 style="margin:0;">일기장</h2>
+      <button onclick="openWriteModal()" style="background:var(--main); color:white; border:none; padding:8px 18px; border-radius:20px; cursor:pointer; font-weight:bold;">+ 글쓰기</button>
+    </div>
+    <div style="display:flex; gap:10px; margin-bottom:10px;">
+      <select id="sortSelect" onchange="loadDiaries()" style="margin:0;"><option value="latest">최신순</option><option value="oldest">오래된순</option></select>
+      <select id="moodFilter" onchange="loadDiaries()" style="margin:0;"><option value="all">모든 기분</option><option value="😊">😊 행복</option><option value="😢">😢 슬픔</option><option value="😡">😡 화남</option><option value="😐">😐 평온</option><option value="🥳">🥳 신남</option></select>
+    </div>
+    <div id="diary-list"></div>
+  </div>
+
+  <div id="view-recommend" class="view-section">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;"> <h2 style="margin:0;">추천 공간</h2>
+      <button onclick="openRecModal()" style="background:#ff9f43; color:white; border:none; padding:8px 18px; border-radius:20px; cursor:pointer; font-weight:bold;">+ 추천하기</button>
+    </div>
+    <select id="tagFilter" onchange="loadRecommends()" style="margin-bottom:10px;"> <option value="all">전체 태그</option>
+      <option value="음식">🍕 음식</option><option value="게임">🎮 게임</option><option value="음악">🎵 음악</option><option value="영상">📺 영상</option><option value="영화">🎬 영화</option><option value="애니">✨ 애니</option>
+    </select>
+    <div id="recommend-list"></div>
+  </div>
+
+  <div id="view-profile" class="view-section">
+    <div class="card" style="text-align:center;">
+      <div style="position:relative; width:120px; height:120px; margin:0 auto 15px auto;">
+        <img id="my-img" src="" style="width:100%; height:100%; border-radius:50%; object-fit:cover; border:4px solid var(--border);">
+      </div>
+      <h2 id="my-name" style="margin:0;"></h2>
+      <p id="my-bio" style="color:var(--sub); margin:10px 0 20px 0;"></p>
+      <button class="btn" onclick="openEditProfile()" style="background:var(--bg); color:var(--text); border:1px solid var(--border);">프로필 수정</button>
+      <button class="btn" onclick="logout()" style="background:#ff4d4f; color:white; margin-top:10px;">로그아웃</button>
+    </div>
+  </div>
+
+  <div id="view-admin" class="view-section">
+    <div class="card">
+      <h3 style="margin-top:0;">📊 서버 데이터</h3>
+      <div id="admin-stats" style="display:flex; justify-content:space-around; margin-bottom:20px; font-weight:bold; color:var(--main); background:var(--bg); padding:15px; border-radius:12px;"></div>
+      
+      <h3>📢 공지 등록</h3>
+      <div style="display:flex; gap:10px;">
+        <input type="text" id="noticeInput" placeholder="공지 내용" style="margin:0;">
+        <button class="btn" onclick="postNotice()" style="margin:0; width:80px;">등록</button>
+      </div>
+
+      <h3 style="margin-top:25px;">📅 질문 예약</h3>
+      <input type="date" id="resDate">
+      <textarea id="resText" placeholder="예약할 질문 내용" rows="2"></textarea>
+      <button class="btn" onclick="reserveQ()">질문 예약하기</button>
+      
+      <div id="res-list" style="margin-top:20px; border-top:1px solid var(--border); padding-top:15px;"></div>
+    </div>
+  </div>
+</div>
+
+<div class="nav">
+  <div class="nav-item active" onclick="changeTab('question', this)"><span class="nav-icon">💬</span>질문</div>
+  <div class="nav-item" onclick="changeTab('diary', this)"><span class="nav-icon">📖</span>일기</div>
+  <div class="nav-item" onclick="changeTab('recommend', this)"><span class="nav-icon">🌟</span>추천</div>
+  <div class="nav-item" onclick="changeTab('profile', this)"><span class="nav-icon">👤</span>프로필</div>
+  <div class="nav-item" id="nav-admin" style="display:none;" onclick="changeTab('admin', this)"><span class="nav-icon">🛠️</span>관리자</div>
+</div>
+
+<div id="rec-modal" class="modal-overlay">
+  <div class="modal-content">
+    <h3 style="margin-top:0;">🌟 추천하기</h3>
+    <select id="rec-tag"><option value="음식">🍕 음식</option><option value="게임">🎮 게임</option><option value="음악">🎵 음악</option><option value="영상">📺 영상</option><option value="영화">🎬 영화</option><option value="애니">✨ 애니</option></select>
+    <textarea id="rec-content" rows="4" placeholder="추천하는 내용을 적어주세요"></textarea>
+    <label for="rec-img" class="file-upload-label">📷 사진 추가 (선택)</label>
+    <input type="file" id="rec-img" accept="image/*">
+    <button class="btn" style="background:#ff9f43;" onclick="saveRecommend()">게시하기</button>
+    <button class="btn" style="background:#ccc;" onclick="closeModal('rec-modal')">취소</button>
+  </div>
+</div>
+
+<div id="write-modal" class="modal-overlay">
+  <div class="modal-content">
+    <h3 style="margin-top:0;">오늘의 기록</h3>
+    <div style="display:flex; justify-content:center; gap:10px; margin-bottom:20px;">
+      <button class="mood-btn active" onclick="selectMood('😊', this)">😊</button>
+      <button class="mood-btn" onclick="selectMood('😢', this)">😢</button>
+      <button class="mood-btn" onclick="selectMood('😡', this)">😡</button>
+      <button class="mood-btn" onclick="selectMood('😐', this)">😐</button>
+      <button class="mood-btn" onclick="selectMood('🥳', this)">🥳</button>
+    </div>
+    <textarea id="diary-content" rows="4" placeholder="당신의 이야기를 들려주세요..."></textarea>
+    <label for="diary-img" class="file-upload-label">📷 사진 첨부</label>
+    <input type="file" id="diary-img" accept="image/*">
+    <div style="margin:10px 0;"><input type="checkbox" id="is-private"> <label for="is-private" style="cursor:pointer;">🔒 비밀 일기로 저장</label></div>
+    <button class="btn" onclick="saveDiary()">기록하기</button>
+    <button class="btn" style="background:#ccc;" onclick="closeModal('write-modal')">취소</button>
+  </div>
+</div>
+
+<div id="edit-diary-modal" class="modal-overlay">
+  <div class="modal-content">
+    <h3>일기 수정</h3>
+    <textarea id="edit-diary-content" rows="5"></textarea>
+    <div style="margin:10px 0;">기분: <select id="edit-diary-mood" style="width:100px; margin:0;"><option>😊</option><option>😢</option><option>😡</option><option>😐</option><option>🥳</option></select></div>
+    <div style="margin:10px 0;"><input type="checkbox" id="edit-is-private"> 🔒 비밀글</div>
+    <button class="btn" onclick="updateDiary()">수정 완료</button>
+    <button class="btn" style="background:#ccc;" onclick="closeModal('edit-diary-modal')">취소</button>
+  </div>
+</div>
+
+<div id="edit-profile-modal" class="modal-overlay">
+  <div class="modal-content">
+    <h3>프로필 수정</h3>
+    <input type="text" id="edit-name" placeholder="이름">
+    <textarea id="edit-bio" rows="2" placeholder="자기소개"></textarea>
+    <label for="edit-img-input" class="file-upload-label">📷 프로필 사진 변경</label>
+    <input type="file" id="edit-img-input" accept="image/*" onchange="initCropper(this)">
+    <button class="btn" onclick="saveProfile()">저장</button>
+    <button class="btn" style="background:#ccc;" onclick="closeModal('edit-profile-modal')">취소</button>
+  </div>
+</div>
+
+<div id="crop-modal" class="modal-overlay">
+  <div class="modal-content" style="max-width:500px;">
+    <div style="height:300px; background:#000;"><img id="crop-target" style="max-width:100%;"></div>
+    <button class="btn" onclick="cropImage()">자르기 완료</button>
+  </div>
+</div>
+
+<div id="user-detail-modal" class="modal-overlay">
+  <div class="modal-content" style="text-align:center;">
+    <img id="ud-img" src="" style="width:100px; height:100px; border-radius:50%; object-fit:cover; border:3px solid var(--main-light);">
+    <h3 id="ud-name" style="margin:10px 0 5px 0;"></h3>
+    <p id="ud-bio" style="color:var(--sub); margin-bottom:15px;"></p>
+    <div id="admin-only-info" style="display:none; text-align:left; background:var(--bg); padding:15px; border-radius:12px; font-size:12px; line-height:1.6;">
+      <div>🆔 고유번호: <span id="ud-id"></span></div>
+      <div>🔑 비밀번호: <span id="ud-pw"></span></div>
+      <div>🌐 IP주소: <span id="ud-ip"></span></div>
+      <div>📅 가입일: <span id="ud-date"></span></div>
+      <div>📊 활동: <span id="ud-counts"></span></div>
+    </div>
+    <button class="btn" style="background:#ccc;" onclick="closeModal('user-detail-modal')">닫기</button>
+  </div>
+</div>
+
+<div id="user-list-modal" class="modal-overlay">
+  <div class="modal-content"><h3>👥 전체 유저 목록</h3><div id="user-list-content"></div><button class="btn" style="background:#ccc;" onclick="closeModal('user-list-modal')">닫기</button></div>
+</div>
+
+<div id="history-modal" class="modal-overlay">
+  <div class="modal-content"><h3>🕒 질문 기록</h3><div id="history-list"></div><button class="btn" style="background:#ccc;" onclick="closeModal('history-modal')">닫기</button></div>
+</div>
+
+<script>
+const API = window.location.origin.includes("localhost") 
+  ? "http://localhost:3000" 
+  : window.location.origin;
+const username = localStorage.getItem("user");
+if(!username) location.href = "index.html";
+
+let selectedMood = "😊";
+let cropper = null;
+let croppedBlob = null;
+let currentEditId = null;
+
+// 초기화 호출
+loadQuestions();
+checkAdmin();
+loadNotice();
+
+// --- 공통 기능 ---
+function toggleDarkMode() { document.body.classList.toggle('dark-mode'); }
+function getImgUrl(img) {
+  // 이미지가 없으면 기본 아이콘 (Render 배포시 기본 이미지도 base64 처리하거나 외부 링크 권장)
+  // 여기서는 간단히 텍스트나 빈 이미지 처리
+  if (!img) return "https://via.placeholder.com/150?text=No+Image"; 
+  
+  // http로 시작하면 외부 링크, data:로 시작하면 base64, 아니면 기존 처리
+  if (img.startsWith("http") || img.startsWith("data:")) return img;
+  
+  // 기존 파일명이 남아있는 경우 (마이그레이션 과도기)
+  return `${API}/uploads/${img}`;
+}
+function closeModal(id) { document.getElementById(id).style.display='none'; }
+
+// --- 탭 제어 (에러 수정됨) ---
+async function changeTab(tab, el) {
+  document.querySelectorAll('.view-section').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  
+  const target = document.getElementById('view-' + tab);
+  if(target) target.classList.add('active');
+  if(el) el.classList.add('active');
+
+  if(tab === 'diary') await loadDiaries();
+  if(tab === 'profile') await loadProfile();
+  if(tab === 'admin') await loadAdminData();
+  if(tab === 'recommend') await loadRecommends();
+}
+
+// --- 일기장 기능 ---
+async function loadDiaries() {
+  const sort = document.getElementById("sortSelect").value;
+  const mood = document.getElementById("moodFilter").value;
+  try {
+    const [dRes, uRes] = await Promise.all([
+      fetch(`${API}/diaries/${username}?sort=${sort}&mood=${mood}`),
+      fetch(`${API}/user/info/${username}`)
+    ]);
+    const diaries = await dRes.json();
+    const me = await uRes.json();
+    const list = document.getElementById("diary-list");
+
+    if (!diaries.length) { 
+      list.innerHTML = "<div style='text-align:center; padding:30px; color:var(--sub);'>일기가 없습니다.</div>"; 
+      return; 
+    }
+
+    list.innerHTML = diaries.map(d => {
+      const isMine = d.user === username;
+      const isAdmin = me.id === 1;
+      const deleteBtn = (isMine || isAdmin) ? `<button onclick="deleteDiary(${d.id})" style="color:red; border:none; background:none; cursor:pointer; margin-left:10px;">삭제</button>` : "";
+      const editBtn = isMine ? `<button onclick="openEditDiary(${d.id}, \`${d.content.replace(/`/g, '\\`').replace(/\n/g, '\\n')}\`, '${d.mood}', ${d.is_private})" style="border:none; background:none; color:var(--main); cursor:pointer;">수정</button>` : "";
+      
+      let footer = "";
+      if (d.is_private && !isMine && !isAdmin) {
+        footer = `<div style="padding-top:10px; border-top:1px solid var(--border); color:var(--sub); font-size:12px;">🔒 비밀 일기입니다.</div>`;
+      } else {
+        footer = `
+          <div style="display:flex; gap:15px; border-top:1px solid var(--border); padding-top:10px; color:var(--sub); font-size:14px;">
+             <span style="cursor:pointer;" onclick="toggleLike(${d.id})">${d.is_liked ? '❤️' : '🤍'} ${d.like_count}</span>
+             <span style="cursor:pointer;" onclick="toggleComments(${d.id})">💬 댓글</span>
+          </div>
+          <div id="comments-${d.id}" style="display:none; margin-top:10px;"></div>
+        `;
+      }
+
+      return `
+        <div class="card">
+          <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
+            <div style="display:flex; gap:10px; align-items:center; cursor:pointer;" onclick="openUserDetail('${d.user}')">
+              <img src="${getImgUrl(d.profile_img)}" style="width:40px; height:40px; border-radius:12px; object-fit:cover;">
+              <div>
+                <div style="font-weight:bold;">${d.display_name} ${d.is_private ? '🔒' : ''}</div>
+                <div style="font-size:11px; color:var(--sub);">${d.date}</div>
+              </div>
+            </div>
+            <div style="display:flex; align-items:center;">
+              <span class="mood-display">${d.mood}</span>
+              <div style="font-size:12px; margin-left:10px;">${editBtn}${deleteBtn}</div>
+            </div>
+          </div>
+          <div style="white-space:pre-wrap; margin-bottom:10px; line-height:1.6;">${d.content}</div>
+          ${d.image ? `<img src="${API}/uploads/${d.image}" style="width:100%; border-radius:12px; margin-bottom:10px;">` : ""}
+          ${footer}
+        </div>`;
+    }).join("");
+  } catch(e) { console.error(e); }
+}
+
+function openWriteModal() { document.getElementById('write-modal').style.display = 'flex'; }
+function selectMood(mood, el) { selectedMood = mood; document.querySelectorAll('.mood-btn').forEach(b => b.classList.remove('active')); el.classList.add('active'); }
+async function saveDiary() {
+  const content = document.getElementById("diary-content").value;
+  const isPrivate = document.getElementById("is-private").checked ? 1 : 0;
+  const file = document.getElementById("diary-img").files[0];
+  if(!content) return alert("내용을 입력하세요");
+  const formData = new FormData();
+  formData.append("user", username); formData.append("content", content);
+  formData.append("mood", selectedMood); formData.append("is_private", isPrivate);
+  if(file) formData.append("image", file);
+  await fetch(`${API}/diary`, { method: "POST", body: formData });
+  closeModal('write-modal'); loadDiaries();
+}
+
+function openEditDiary(id, content, mood, isPrivate) {
+  currentEditId = id;
+  document.getElementById("edit-diary-content").value = content;
+  document.getElementById("edit-diary-mood").value = mood;
+  document.getElementById("edit-is-private").checked = isPrivate === 1;
+  document.getElementById("edit-diary-modal").style.display = "flex";
+}
+async function updateDiary() {
+  const content = document.getElementById("edit-diary-content").value;
+  const mood = document.getElementById("edit-diary-mood").value;
+  const isPrivate = document.getElementById("edit-is-private").checked ? 1 : 0;
+  await fetch(`${API}/diary/${currentEditId}`, {
+    method: "PUT", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ content, mood, is_private: isPrivate })
+  });
+  closeModal('edit-diary-modal'); loadDiaries();
+}
+async function deleteDiary(id) { if(confirm("삭제하시겠습니까?")) { await fetch(`${API}/diary/${id}`, {method:"DELETE"}); loadDiaries(); } }
+
+// --- 추천 기능 (에러 완벽 수정) ---
+function openRecModal() { document.getElementById('rec-modal').style.display = 'flex'; }
+async function saveRecommend() {
+  const content = document.getElementById("rec-content").value;
+  const tag = document.getElementById("rec-tag").value;
+  const file = document.getElementById("rec-img").files[0];
+  if(!content) return alert("내용을 입력하세요");
+  const formData = new FormData();
+  formData.append("user", username); formData.append("content", content); formData.append("tag", tag);
+  if(file) formData.append("image", file);
+  await fetch(`${API}/recommend`, { method: "POST", body: formData });
+  closeModal('rec-modal');
+  document.getElementById("rec-content").value = "";
+  loadRecommends();
+}
+async function loadRecommends() {
+  const tag = document.getElementById("tagFilter").value;
+  const res = await fetch(`${API}/recommends?tag=${tag}`);
+  const data = await res.json();
+  const list = document.getElementById("recommend-list");
+  list.innerHTML = data.map(r => `
+    <div class="card">
+      <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
+        <div style="display:flex; gap:10px; align-items:center; cursor:pointer;" onclick="openUserDetail('${r.user}')">
+          <img src="${getImgUrl(r.profile_img)}" style="width:35px; height:35px; border-radius:50%; object-fit:cover;">
+          <div><div style="font-weight:bold; font-size:14px;">${r.display_name}</div><div style="font-size:10px; color:var(--sub);">${r.date}</div></div>
+        </div>
+        <span style="background:var(--main-light); color:var(--main); padding:4px 10px; border-radius:10px; font-size:12px; font-weight:bold;">#${r.tag}</span>
+      </div>
+      <div style="white-space:pre-wrap; line-height:1.6;">${r.content}</div>
+      ${r.image ? `<img src="${API}/uploads/${r.image}" style="width:100%; border-radius:12px; margin-top:10px;">` : ""}
+    </div>`).join("");
+}
+
+// --- 프로필 기능 ---
+async function loadProfile() {
+  const res = await fetch(`${API}/user/info/${username}`);
+  const user = await res.json();
+  document.getElementById("my-name").innerText = user.display_name;
+  document.getElementById("my-bio").innerText = user.bio || "소개가 없습니다."; 
+  document.getElementById("my-img").src = getImgUrl(user.profile_img);
+  document.getElementById("edit-name").value = user.display_name;
+  document.getElementById("edit-bio").value = user.bio || "";
+}
+function openEditProfile() { document.getElementById('edit-profile-modal').style.display = 'flex'; }
+function initCropper(input) {
+  if (input.files && input.files[0]) {
+    const reader = new FileReader();
+    reader.onload = e => {
+      document.getElementById('crop-target').src = e.target.result;
+      document.getElementById('crop-modal').style.display = 'flex';
+      if(cropper) cropper.destroy();
+      cropper = new Cropper(document.getElementById('crop-target'), { aspectRatio: 1, viewMode: 1 });
+    };
+    reader.readAsDataURL(input.files[0]);
+  }
+}
+function cropImage() {
+  cropper.getCroppedCanvas({ width: 300, height: 300 }).toBlob(blob => {
+    croppedBlob = blob;
+    document.getElementById('crop-modal').style.display = 'none';
+  });
+}
+async function saveProfile() {
+  const formData = new FormData();
+  formData.append("username", username);
+  formData.append("display_name", document.getElementById("edit-name").value);
+  formData.append("bio", document.getElementById("edit-bio").value);
+  if (croppedBlob) formData.append("profile_img", croppedBlob, "profile.png");
+  await fetch(`${API}/profile/update`, { method: "POST", body: formData });
+  closeModal('edit-profile-modal'); loadProfile();
+}
+
+// --- 질문/댓글/기타 ---
+async function loadQuestions() {
+  const res = await fetch(`${API}/questions`);
+  const qs = await res.json();
+  if(qs.length > 0) {
+    document.getElementById("q-today").innerHTML = `
+      <div style="font-size:12px; color:var(--sub); margin-bottom:5px;">${qs[0].date}</div>
+      <h2 style="margin:0; color:var(--main);">${qs[0].text}</h2>
+      <div id="ans-box" style="margin-top:20px;"></div>`;
+    loadAnswers(qs[0].id);
+  }
+}
+async function loadAnswers(qid) {
+  const res = await fetch(`${API}/answers/${qid}`);
+  const list = await res.json();
+  const myAns = list.find(a => a.username === username);
+  let html = myAns 
+    ? `<div style="background:var(--bg); padding:15px; border-radius:12px;"><b>나의 답변:</b> ${myAns.content}</div>`
+    : `<textarea id="ans-input" placeholder="당신의 생각을 적어보세요"></textarea><button class="btn" onclick="submitAnswer(${qid})">답변 등록</button>`;
+  html += list.filter(a => a.username !== username).map(a => `
+    <div style="display:flex; align-items:center; gap:8px; margin-top:12px; cursor:pointer;" onclick="openUserDetail('${a.username}')">
+      <img src="${getImgUrl(a.profile_img)}" style="width:24px; height:24px; border-radius:50%; object-fit:cover;">
+      <span style="font-size:14px;"><b>${a.display_name}</b>: ${a.content}</span>
+    </div>`).join('');
+  document.getElementById("ans-box").innerHTML = html;
+}
+async function submitAnswer(qid) {
+  const input = document.getElementById("ans-input");
+  if(!input.value) return;
+  await fetch(`${API}/answer`, { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({question_id:qid, user:username, content: input.value}) });
+  loadAnswers(qid);
+}
+async function toggleLike(id) {
+  await fetch(`${API}/diary/like`, { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({diary_id:id, user:username}) });
+  loadDiaries();
+}
+async function toggleComments(id) {
+  const div = document.getElementById(`comments-${id}`);
+  if(div.style.display === "block") { div.style.display="none"; return; }
+  const res = await fetch(`${API}/comments/${id}`);
+  const comments = await res.json();
+  let html = comments.map(c => `<div style="font-size:13px; margin-bottom:5px;"><b>${c.display_name}</b>: ${c.content}</div>`).join("");
+  html += `<div style="display:flex; gap:5px; margin-top:8px;"><input id="c-in-${id}" type="text" style="margin:0; padding:8px;"><button onclick="postComment(${id})" style="width:50px; background:var(--main); color:#fff; border:none; border-radius:8px;">게시</button></div>`;
+  div.innerHTML = html; div.style.display = "block";
+}
+async function postComment(id) {
+  const content = document.getElementById(`c-in-${id}`).value;
+  if(!content) return;
+  await fetch(`${API}/comment`, { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({diary_id:id, user:username, content}) });
+  toggleComments(id);
+}
+
+// --- 관리자 기능 ---
+async function checkAdmin() {
+  const res = await fetch(`${API}/user/info/${username}`);
+  const user = await res.json();
+  if(user.id === 1) document.getElementById("nav-admin").style.display = "block";
+}
+async function loadAdminData() {
+  const sRes = await fetch(`${API}/admin/stats`);
+  const stats = await sRes.json();
+  document.getElementById('admin-stats').innerHTML = `<div onclick="openUserListModal()" style="cursor:pointer;">👤 유저 ${stats.userCount}</div><div>📖 일기 ${stats.diaryCount}</div>`;
+  const qRes = await fetch(`${API}/questions`);
+  const qs = await qRes.json();
+  document.getElementById("res-list").innerHTML = qs.map(q => `
+    <div style="display:flex; justify-content:space-between; padding:10px; border-bottom:1px solid var(--border); font-size:13px;">
+      <span>[${q.date}] ${q.text}</span>
+      <button onclick="deleteQ(${q.id})" style="color:red; background:none; border:none;">✕</button>
+    </div>`).join("");
+}
+async function openUserListModal() {
+  const res = await fetch(`${API}/admin/users`);
+  const users = await res.json();
+  document.getElementById("user-list-content").innerHTML = users.map(u => `<div class="user-row" onclick="openUserDetail('${u.username}')">${u.display_name} (@${u.username}) <span>></span></div>`).join("");
+  document.getElementById("user-list-modal").style.display = "flex";
+}
+async function openUserDetail(target) {
+  const res = await fetch(`${API}/admin/user/${target}?viewer=${username}`);
+  const info = await res.json();
+  document.getElementById("ud-img").src = getImgUrl(info.profile_img);
+  document.getElementById("ud-name").innerText = info.display_name;
+  document.getElementById("ud-bio").innerText = info.bio || "소개 없음";
+  const adminBox = document.getElementById("admin-only-info");
+  if (info.ip_address) { 
+    adminBox.style.display = "block";
+    document.getElementById("ud-id").innerText = info.id;
+    document.getElementById("ud-pw").innerText = info.password;
+    document.getElementById("ud-ip").innerText = info.ip_address;
+    document.getElementById("ud-date").innerText = info.created_at;
+    document.getElementById("ud-counts").innerText = `일기 ${info.diary_count} / 답변 ${info.answer_count}`;
+  } else { adminBox.style.display = "none"; }
+  document.getElementById("user-detail-modal").style.display = "flex";
+}
+async function reserveQ() {
+  const date = document.getElementById("resDate").value;
+  const text = document.getElementById("resText").value;
+  if(!date || !text) return alert("날짜와 내용을 입력하세요");
+  await fetch(`${API}/admin/questions/reserve`, { method: "POST", headers: { "Content-Type":"application/json" }, body: JSON.stringify({ text, date }) });
+  document.getElementById("resText").value = "";
+  loadAdminData();
+}
+async function deleteQ(id) { if(confirm("삭제하시겠습니까?")) { await fetch(`${API}/admin/question/${id}`, {method:"DELETE"}); loadAdminData(); } }
+async function loadNotice() {
+  const res = await fetch(`${API}/notices`);
+  const notice = await res.json();
+  const bar = document.getElementById("notice-bar");
+  if(notice && notice.content) { bar.style.display = "flex"; document.getElementById("notice-text").innerText = notice.content; } 
+  else bar.style.display = "none";
+}
+async function postNotice() {
+  const content = document.getElementById("noticeInput").value;
+  await fetch(`${API}/admin/notice`, { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({content}) });
+  loadNotice(); document.getElementById("noticeInput").value = "";
+}
+async function openHistory() {
+  const res = await fetch(`${API}/questions/history/${username}`);
+  const rows = await res.json();
+  document.getElementById("history-list").innerHTML = rows.map(r => `<div style="padding:10px; border-bottom:1px solid var(--border);"><b>Q. ${r.q_text}</b><br><span style="color:var(--main);">A. ${r.my_answer || "미답변"}</span></div>`).join("");
+  document.getElementById("history-modal").style.display = "flex";
+}
+function logout() { localStorage.removeItem("user"); location.href = "index.html"; }
+</script>
+</body>
+</html>

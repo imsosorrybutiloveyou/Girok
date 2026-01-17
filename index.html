@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MindBridge</title>
+
+  <style>
+    /* ===== 전역 리셋 (오른쪽 잘림 방지 핵심) ===== */
+    * {
+      box-sizing: border-box;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      overflow-x: hidden;
+      background: #f6f4fb;
+    }
+
+    /* ===== 전체 컨테이너 ===== */
+    .container {
+      width: 100%;
+      min-height: 100vh;
+      padding: 24px 16px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    /* ===== 로그인 카드 ===== */
+    .login-box {
+      width: 100%;
+      max-width: 420px;
+      background: #ffffff;
+      border-radius: 20px;
+      padding: 24px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+    }
+
+    .login-box h1 {
+      text-align: center;
+      margin-bottom: 24px;
+      font-size: 22px;
+      font-weight: 700;
+      color: #333;
+    }
+
+    /* ===== 입력창 ===== */
+    input {
+      width: 100%;
+      padding: 14px 16px;
+      margin-bottom: 12px;
+      border-radius: 14px;
+      border: none;
+      background: #f1f1f1;
+      font-size: 15px;
+      outline: none;
+    }
+
+    /* ===== 버튼 ===== */
+    button {
+      width: 100%;
+      padding: 16px;
+      margin-top: 10px;
+      border: none;
+      border-radius: 18px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      box-sizing: border-box;
+    }
+
+    .login-btn {
+      background: #7b6cff;
+      color: white;
+    }
+
+    .register-btn {
+      background: #7b6cff;
+      color: white;
+      opacity: 0.85;
+    }
+
+    button:active {
+      transform: scale(0.98);
+    }
+
+    /* ===== 에러 메시지 ===== */
+    .error {
+      margin-top: 12px;
+      color: #ff4d4f;
+      font-size: 14px;
+      text-align: center;
+      display: none;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <div class="login-box">
+      <h1>MindBridge</h1>
+
+      <input id="u" type="text" placeholder="이름" />
+      <input id="p" type="password" placeholder="비밀번호" />
+
+      <button class="login-btn" onclick="login()">로그인</button>
+      <button class="register-btn" onclick="register()">회원가입</button>
+
+      <div id="error" class="error"></div>
+    </div>
+  </div>
+
+  <script>
+    const API = window.location.origin.includes("localhost") 
+      ? "http://localhost:3000" 
+      : window.location.origin;
+
+    function showError(msg) {
+      const e = document.getElementById("error");
+      e.innerText = msg;
+      e.style.display = "block";
+    }
+
+    function login() {
+  const username = document.getElementById("u").value.trim();
+  const password = document.getElementById("p").value.trim();
+
+  if (!username || !password) {
+    showError("이름과 비밀번호를 입력하세요");
+    return;
+  }
+
+  fetch(API + "/login", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ username, password })
+  })
+  .then(r => r.json())
+  .then(d => {
+    if (d.error) {
+      showError(d.error);
+      return;
+    }
+
+    // 🔥 로그인 성공 → 다음 화면으로 이동
+    localStorage.setItem("user", d.username);
+    window.location.href = "main.html?new=true";
+  })
+  .catch(() => {
+    showError("서버에 연결할 수 없습니다");
+  });
+}
+
+
+    function register() {
+      const username = document.getElementById("u").value.trim();
+      const password = document.getElementById("p").value.trim();
+
+      if (!username || !password) {
+        showError("이름과 비밀번호를 입력하세요");
+        return;
+      }
+
+      fetch(API + "/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, password })
+      })
+      .then(r => r.json())
+      .then(d => {
+        if (d.error) {
+          showError(d.error);
+          return;
+        }
+        alert("회원가입 완료! 로그인하세요.");
+      })
+      .catch(() => {
+        showError("서버에 연결할 수 없습니다");
+      });
+    }
+  </script>
+</body>
+</html>
