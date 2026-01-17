@@ -379,31 +379,28 @@ app.get("/admin/user/:username", async (req, res) => {
   const targetUser = await User.findOne({ username: req.params.username });
   if(!targetUser) return res.json({});
 
-  const viewer = req.query.viewer;
-  // 간단하게 viewer가 'admin'이거나 id체크 (여기선 생략하고 viewer가 admin이면 보여줌)
-  // 실제 배포시엔 강력한 권한 체크 필요
+  const viewer = req.query.viewer; 
   
-  // 조회자가 관리자인지 확인 (임시: 첫번째 가입자 or 'admin')
-  const viewerObj = await User.findOne({ username: viewer });
-  // MongoDB는 id=1 개념이 없으므로, 그냥 모든 정보를 내려주되 
-  // 프론트에서 숨기는 방식은 보안에 취약하나, 기존 로직 유지를 위해 데이터 전송
-  
-  const dCount = await Diary.countDocuments({ user: targetUser.username });
-  const aCount = await Answer.countDocuments({ user: targetUser.username });
+  // [중요] 조회자(viewer)가 'admin'이라는 아이디일 때만 비밀 정보를 줍니다.
+  if (viewer === 'admin') {
+    const dCount = await Diary.countDocuments({ user: targetUser.username });
+    const aCount = await Answer.countDocuments({ user: targetUser.username });
 
-  // 민감 정보 포함하여 전송
-  res.json({
-    id: targetUser._id, // MongoDB ObjectId
-    username: targetUser.username,
-    display_name: targetUser.display_name,
-    bio: targetUser.bio,
-    profile_img: targetUser.profile_img,
-    created_at: targetUser.created_at,
-    ip_address: targetUser.ip_address,
-    password: "Encrypted", // 보안상 해시값 직접 노출보다 마스킹
-    diary_count: dCount,
-    answer_count: aCount
-  });
+    res.json({
+      ...targetUser.toObject(), // Mongoose 문서를 객체로 변환
+      id: targetUser._id,
+      password: "Encrypted",
+      diary_count: dCount,
+      answer_count: aCount
+    });
+  } else {
+    // 일반 유저는 기본 정보만
+    res.json({
+      display_name: targetUser.display_name,
+      bio: targetUser.bio,
+      profile_img: targetUser.profile_img
+    });
+  }
 });
 
 app.post("/admin/questions/reserve", async (req, res) => {

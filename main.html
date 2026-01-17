@@ -308,7 +308,7 @@ async function loadDiaries() {
 
     list.innerHTML = diaries.map(d => {
       const isMine = d.user === username;
-      const isAdmin = me.id === 1;
+      const isAdmin = me.username === 'admin';
       const deleteBtn = (isMine || isAdmin) ? `<button onclick="deleteDiary(${d.id})" style="color:red; border:none; background:none; cursor:pointer; margin-left:10px;">삭제</button>` : "";
       const editBtn = isMine ? `<button onclick="openEditDiary(${d.id}, \`${d.content.replace(/`/g, '\\`').replace(/\n/g, '\\n')}\`, '${d.mood}', ${d.is_private})" style="border:none; background:none; color:var(--main); cursor:pointer;">수정</button>` : "";
       
@@ -511,7 +511,10 @@ async function postComment(id) {
 async function checkAdmin() {
   const res = await fetch(`${API}/user/info/${username}`);
   const user = await res.json();
-  if(user.id === 1) document.getElementById("nav-admin").style.display = "block";
+  // 아이디가 'admin'인 사람만 관리자 메뉴 보여주기
+  if(user.username === 'admin') {
+    document.getElementById("nav-admin").style.display = "block";
+  }
 }
 async function loadAdminData() {
   const sRes = await fetch(`${API}/admin/stats`);
