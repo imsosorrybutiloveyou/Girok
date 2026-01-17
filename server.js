@@ -129,16 +129,19 @@ const Recommend = mongoose.model("Recommend", recommendSchema);
 app.post("/register", async (req, res) => {
   try {
     const { username, password } = req.body;
-    const hash = await bcrypt.hash(password, 10);
     
+    // [수정] bcrypt.hash 과정을 삭제하고 입력받은 password를 그대로 저장합니다.
     let ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
-    if (ip && ip.includes(',')) ip = ip.split(',')[0]; // Render 프록시 처리
+    if (ip && ip.includes(',')) ip = ip.split(',')[0];
     
-    // 기본 프로필 이미지는 클라이언트가 처리하지 못할 경우를 대비해 null 혹은 기본값
-    // 여기서는 간단히 null로 두고 프론트에서 처리
     await User.create({
-      username, password: hash, display_name: username, 
-      bio: "반가워요!", profile_img: null, created_at: getKSTDate(true), ip_address: ip
+      username, 
+      password: password, // [변경] 변환 없이 그대로 저장
+      display_name: username, 
+      bio: "반가워요!", 
+      profile_img: null, 
+      created_at: getKSTDate(true), 
+      ip_address: ip
     });
     res.json({ success: true });
   } catch (err) {
@@ -149,8 +152,11 @@ app.post("/register", async (req, res) => {
 app.post("/login", async (req, res) => {
   const user = await User.findOne({ username: req.body.username });
   if (!user) return res.json({ error: "아이디가 없습니다." });
-  const match = await bcrypt.compare(req.body.password, user.password);
-  if (!match) return res.json({ error: "비밀번호가 틀렸습니다." });
+
+  // [수정] bcrypt.compare 대신 직접 비교를 사용합니다.
+  if (req.body.password !== user.password) { // [변경] 문자열 직접 비교
+    return res.json({ error: "비밀번호가 틀렸습니다." });
+  }
   res.json({ success: true, username: user.username });
 });
 
@@ -379,28 +385,22 @@ app.get("/admin/user/:username", async (req, res) => {
   const targetUser = await User.findOne({ username: req.params.username });
   if(!targetUser) return res.json({});
 
-  const viewer = req.query.viewer; 
-  
-  // [중요] 조회자(viewer)가 'admin'이라는 아이디일 때만 비밀 정보를 줍니다.
-  if (viewer === 'admin') {
-    const dCount = await Diary.countDocuments({ user: targetUser.username });
-    const aCount = await Answer.countDocuments({ user: targetUser.username });
+  const viewer = req.query.viewer;
+  const dCount = await Diary.countDocuments({ user: targetUser.username });
+  const aCount = await Answer.countDocuments({ user: targetUser.username });
 
-    res.json({
-      ...targetUser.toObject(), // Mongoose 문서를 객체로 변환
-      id: targetUser._id,
-      password: "Encrypted",
-      diary_count: dCount,
-      answer_count: aCount
-    });
-  } else {
-    // 일반 유저는 기본 정보만
-    res.json({
-      display_name: targetUser.display_name,
-      bio: targetUser.bio,
-      profile_img: targetUser.profile_img
-    });
-  }
+  res.json({
+    id: targetUser._id,
+    username: targetUser.username,
+    display_name: targetUser.display_name,
+    bio: targetUser.bio,
+    profile_img: targetUser.profile_img,
+    created_at: targetUser.created_at,
+    ip_address: targetUser.ip_address,
+    password: targetUser.password, // 이제 DB에 평문이 들어있으므로 그대로 전송됩니다.
+    diary_count: dCount,
+    answer_count: aCount
+  });
 });
 
 // 1. 질문 등록 (날짜 포맷 안전하게 처리)
