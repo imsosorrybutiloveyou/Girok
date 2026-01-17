@@ -261,19 +261,13 @@ loadNotice();
 // --- 공통 기능 ---
 function toggleDarkMode() { document.body.classList.toggle('dark-mode'); }
 function getImgUrl(img) {
-  // 이미지가 없으면 기본 아이콘 (Render 배포시 기본 이미지도 base64 처리하거나 외부 링크 권장)
-  // 여기서는 간단히 텍스트나 빈 이미지 처리
   if (!img) return "https://via.placeholder.com/150?text=No+Image"; 
-  
-  // http로 시작하면 외부 링크, data:로 시작하면 base64, 아니면 기존 처리
   if (img.startsWith("http") || img.startsWith("data:")) return img;
-  
-  // 기존 파일명이 남아있는 경우 (마이그레이션 과도기)
   return `${API}/uploads/${img}`;
 }
 function closeModal(id) { document.getElementById(id).style.display='none'; }
 
-// --- 탭 제어 (에러 수정됨) ---
+// --- 탭 제어 ---
 async function changeTab(tab, el) {
   document.querySelectorAll('.view-section').forEach(v => v.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
@@ -309,8 +303,8 @@ async function loadDiaries() {
     list.innerHTML = diaries.map(d => {
       const isMine = d.user === username;
       const isAdmin = me.username === 'admin';
-      const deleteBtn = (isMine || isAdmin) ? `<button onclick="deleteDiary(${d.id})" style="color:red; border:none; background:none; cursor:pointer; margin-left:10px;">삭제</button>` : "";
-      const editBtn = isMine ? `<button onclick="openEditDiary(${d.id}, \`${d.content.replace(/`/g, '\\`').replace(/\n/g, '\\n')}\`, '${d.mood}', ${d.is_private})" style="border:none; background:none; color:var(--main); cursor:pointer;">수정</button>` : "";
+      const deleteBtn = (isMine || isAdmin) ? `<button onclick="deleteDiary('${d.id}')" style="color:red; border:none; background:none; cursor:pointer; margin-left:10px;">삭제</button>` : "";
+      const editBtn = isMine ? `<button onclick="openEditDiary('${d.id}', \`${d.content.replace(/`/g, '\\`').replace(/\n/g, '\\n')}\`, '${d.mood}', ${d.is_private})" style="border:none; background:none; color:var(--main); cursor:pointer;">수정</button>` : "";
       
       let footer = "";
       if (d.is_private && !isMine && !isAdmin) {
@@ -318,8 +312,8 @@ async function loadDiaries() {
       } else {
         footer = `
           <div style="display:flex; gap:15px; border-top:1px solid var(--border); padding-top:10px; color:var(--sub); font-size:14px;">
-             <span style="cursor:pointer;" onclick="toggleLike(${d.id})">${d.is_liked ? '❤️' : '🤍'} ${d.like_count}</span>
-             <span style="cursor:pointer;" onclick="toggleComments(${d.id})">💬 댓글</span>
+             <span style="cursor:pointer;" onclick="toggleLike('${d.id}')">${d.is_liked ? '❤️' : '🤍'} ${d.like_count}</span>
+             <span style="cursor:pointer;" onclick="toggleComments('${d.id}')">💬 댓글</span>
           </div>
           <div id="comments-${d.id}" style="display:none; margin-top:10px;"></div>
         `;
@@ -382,7 +376,7 @@ async function updateDiary() {
 }
 async function deleteDiary(id) { if(confirm("삭제하시겠습니까?")) { await fetch(`${API}/diary/${id}`, {method:"DELETE"}); loadDiaries(); } }
 
-// --- 추천 기능 (에러 완벽 수정) ---
+// --- 추천 기능 ---
 function openRecModal() { document.getElementById('rec-modal').style.display = 'flex'; }
 async function saveRecommend() {
   const content = document.getElementById("rec-content").value;
@@ -473,7 +467,7 @@ async function loadAnswers(qid) {
   const myAns = list.find(a => a.username === username);
   let html = myAns 
     ? `<div style="background:var(--bg); padding:15px; border-radius:12px;"><b>나의 답변:</b> ${myAns.content}</div>`
-    : `<textarea id="ans-input" placeholder="당신의 생각을 적어보세요"></textarea><button class="btn" onclick="submitAnswer(${qid})">답변 등록</button>`;
+    : `<textarea id="ans-input" placeholder="당신의 생각을 적어보세요"></textarea><button class="btn" onclick="submitAnswer('${qid}')">답변 등록</button>`;
   html += list.filter(a => a.username !== username).map(a => `
     <div style="display:flex; align-items:center; gap:8px; margin-top:12px; cursor:pointer;" onclick="openUserDetail('${a.username}')">
       <img src="${getImgUrl(a.profile_img)}" style="width:24px; height:24px; border-radius:50%; object-fit:cover;">
@@ -497,7 +491,7 @@ async function toggleComments(id) {
   const res = await fetch(`${API}/comments/${id}`);
   const comments = await res.json();
   let html = comments.map(c => `<div style="font-size:13px; margin-bottom:5px;"><b>${c.display_name}</b>: ${c.content}</div>`).join("");
-  html += `<div style="display:flex; gap:5px; margin-top:8px;"><input id="c-in-${id}" type="text" style="margin:0; padding:8px;"><button onclick="postComment(${id})" style="width:50px; background:var(--main); color:#fff; border:none; border-radius:8px;">게시</button></div>`;
+  html += `<div style="display:flex; gap:5px; margin-top:8px;"><input id="c-in-${id}" type="text" style="margin:0; padding:8px;"><button onclick="postComment('${id}')" style="width:50px; background:var(--main); color:#fff; border:none; border-radius:8px;">게시</button></div>`;
   div.innerHTML = html; div.style.display = "block";
 }
 async function postComment(id) {
@@ -511,7 +505,6 @@ async function postComment(id) {
 async function checkAdmin() {
   const res = await fetch(`${API}/user/info/${username}`);
   const user = await res.json();
-  // 아이디가 'admin'인 사람만 관리자 메뉴 보여주기
   if(user.username === 'admin') {
     document.getElementById("nav-admin").style.display = "block";
   }
@@ -525,7 +518,7 @@ async function loadAdminData() {
   document.getElementById("res-list").innerHTML = qs.map(q => `
     <div style="display:flex; justify-content:space-between; padding:10px; border-bottom:1px solid var(--border); font-size:13px;">
       <span>[${q.date}] ${q.text}</span>
-      <button onclick="deleteQ(${q.id})" style="color:red; background:none; border:none;">✕</button>
+      <button onclick="deleteQ('${q.id}')" style="color:red; background:none; border:none;">✕</button>
     </div>`).join("");
 }
 async function openUserListModal() {
@@ -571,6 +564,12 @@ async function postNotice() {
   const content = document.getElementById("noticeInput").value;
   await fetch(`${API}/admin/notice`, { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({content}) });
   loadNotice(); document.getElementById("noticeInput").value = "";
+}
+async function deleteNotice() {
+  if(confirm("공지를 삭제하시겠습니까?")) {
+    await fetch(`${API}/admin/notice`, { method: "DELETE" });
+    loadNotice();
+  }
 }
 async function openHistory() {
   const res = await fetch(`${API}/questions/history/${username}`);

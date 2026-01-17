@@ -403,14 +403,33 @@ app.get("/admin/user/:username", async (req, res) => {
   }
 });
 
+// 1. 질문 등록 (날짜 포맷 안전하게 처리)
 app.post("/admin/questions/reserve", async (req, res) => {
-  await Question.create({ text: req.body.text, date: req.body.date.replace(/-/g, '. ') });
-  res.json({ success: true });
+  try {
+    const { text, date } = req.body;
+    // 날짜 형식이 2023-05-01 처럼 올 텐데, MongoDB 저장을 위해 그대로 쓰거나 변환
+    // 에러 방지를 위해 간단한 유효성 검사 추가
+    if (!text || !date) return res.json({ success: false, msg: "내용 부족" });
+
+    // 날짜 포맷 통일 (YYYY. MM. DD)
+    const formattedDate = date.replace(/-/g, '. '); 
+    
+    await Question.create({ text, date: formattedDate });
+    res.json({ success: true });
+  } catch (err) {
+    console.error("질문 등록 에러:", err);
+    res.status(500).json({ error: "등록 실패" });
+  }
 });
 
+// 2. 질문 삭제 (ID 처리 확실하게)
 app.delete("/admin/question/:id", async (req, res) => {
-  await Question.findByIdAndDelete(req.params.id);
-  res.json({ success: true });
+  try {
+    await Question.findByIdAndDelete(req.params.id);
+    res.json({ success: true });
+  } catch (err) {
+    res.json({ success: false });
+  }
 });
 
 const PORT = process.env.PORT || 3000;
