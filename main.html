@@ -14,226 +14,200 @@
       --main: #9b8cff; --main-light: #2c2c2c; --bg: #121212; --text: #e0e0e0; --sub: #aaa; --white: #1e1e1e; --border: #333;
     }
     * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-    body { margin: 0; background: var(--bg); color: var(--text); padding-bottom: 80px; transition: 0.3s; }
-    header { 
-      background: var(--white); padding: 15px 20px; display: flex; justify-content: space-between; align-items: center;
-      position: sticky; top: 0; z-index: 100; border-bottom: 1px solid var(--border);
-    }
-    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-    .card { background: var(--white); border-radius: 16px; padding: 20px; margin-bottom: 20px; border: 1px solid var(--border); }
-    .nav-bar {
-      position: fixed; bottom: 0; width: 100%; background: var(--white); display: flex; justify-content: space-around;
-      padding: 12px 0; border-top: 1px solid var(--border); z-index: 1000;
-    }
-    .nav-item { cursor: pointer; color: var(--sub); font-size: 12px; text-align: center; flex: 1; transition: 0.2s; }
+    body { margin: 0; background: var(--bg); color: var(--text); padding-bottom: 80px; transition: background 0.3s; }
+    
+    .main-content { max-width: 600px; margin: 0 auto; padding: 20px; }
+    
+    /* 카드 스타일 - 원래의 예쁜 그림자 복구 */
+    .card { background: var(--white); padding: 20px; border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 20px; position: relative; border: 1px solid var(--border); }
+    
+    /* 하단 내비게이션 - 원래 디자인 */
+    .nav { position: fixed; bottom: 0; left: 0; width: 100%; background: var(--white); display: flex; justify-content: space-around; padding: 12px; border-top: 1px solid var(--border); z-index: 1000; }
+    .nav-item { text-align: center; color: var(--sub); font-size: 11px; cursor: pointer; transition: 0.2s; flex: 1; }
     .nav-item.active { color: var(--main); font-weight: bold; }
-    .nav-item i { font-size: 22px; display: block; margin-bottom: 4px; }
+    .nav-icon { font-size: 24px; display: block; margin-bottom: 4px; }
+    
+    /* 버튼 및 입력창 */
+    .btn { background: var(--main); color: white; border: none; padding: 12px; border-radius: 12px; width: 100%; font-size: 15px; cursor: pointer; margin-top: 10px; font-weight: bold; transition: 0.2s; }
+    .btn:active { transform: scale(0.98); opacity: 0.9; }
+    
     .view-section { display: none; }
-    .view-section.active { display: block; }
-    .btn { background: var(--main); color: #fff; border: none; padding: 10px 18px; border-radius: 10px; cursor: pointer; width: 100%; font-size: 15px; }
-    textarea { width: 100%; border: 1px solid var(--border); border-radius: 12px; padding: 15px; font-size: 15px; resize: none; min-height: 120px; margin-bottom: 10px; background: var(--bg); color: var(--text); }
-    .modal { position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); display:none; align-items:center; justify-content:center; z-index:2000; padding: 20px; }
-    .modal-content { background:var(--white); padding:25px; border-radius:20px; width:100%; max-width:450px; position:relative; max-height: 90vh; overflow-y: auto; }
-    .profile-img-big { width: 100px; height: 100px; border-radius: 35px; object-fit: cover; margin-bottom: 15px; border: 3px solid var(--main-light); }
-    .mood-selector { display: flex; gap: 8px; margin-bottom: 15px; overflow-x: auto; padding-bottom: 5px; }
-    .mood-btn { padding: 8px 12px; border-radius: 10px; border: 1px solid var(--border); cursor: pointer; background: var(--white); font-size: 20px; }
-    .mood-btn.active { border-color: var(--main); background: var(--main-light); }
-    #notice-bar { background: var(--main-light); color: var(--main); padding: 10px 20px; font-size: 14px; display: flex; align-items: center; gap: 10px; }
-    .fab { position: fixed; bottom: 90px; right: 20px; width: 56px; height: 56px; border-radius: 28px; background: var(--main); color: white; display: flex; align-items: center; justify-content: center; font-size: 24px; box-shadow: 0 4px 12px rgba(123, 108, 255, 0.4); cursor: pointer; z-index: 900; }
+    .view-section.active { display: block; animation: fadeIn 0.3s; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+    textarea, input[type="text"], input[type="date"], select { width: 100%; padding: 12px; border-radius: 12px; border: 1px solid var(--border); background: var(--bg); color: var(--text); margin-bottom: 10px; outline: none; font-size: 14px; }
+    
+    /* 모달 디자인 복구 */
+    .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 2000; justify-content: center; align-items: center; backdrop-filter: blur(4px); }
+    .modal-content { background: var(--white); width: 90%; max-width: 450px; padding: 25px; border-radius: 24px; max-height: 90vh; overflow-y: auto; position: relative; }
+    
+    .mood-btn { font-size: 28px; background: none; border: none; cursor: pointer; opacity: 0.4; transition: 0.3s; }
+    .mood-btn.active { transform: scale(1.4); opacity: 1; }
+    
+    .file-upload-label { display: block; width: 100%; padding: 15px; border: 2px dashed var(--border); border-radius: 12px; text-align: center; color: var(--sub); cursor: pointer; margin: 10px 0; background: var(--bg); }
+    input[type="file"] { display: none; }
+
+    /* 공지사항 바 */
+    #notice-bar { background: var(--main-light); color: var(--main); padding: 15px; border-radius: 15px; margin-bottom: 20px; border-left: 5px solid var(--main); font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
   </style>
 </head>
 <body>
 
-<header>
-  <h2 style="color:var(--main); margin:0;">MindBridge</h2>
-  <div style="display:flex; gap:15px; align-items:center;">
-    <span onclick="toggleDarkMode()" style="cursor:pointer; font-size:20px;">🌓</span>
-    <span onclick="openHistory()" style="cursor:pointer; font-size:20px;">📜</span>
+<div class="main-content">
+  <div id="notice-bar" style="display:none;">
+    <span>📢 <span id="notice-text"></span></span>
+    <button onclick="deleteNotice()" id="notice-del-btn" style="display:none; background:none; border:none; color:var(--main); cursor:pointer; font-weight:bold;">✕</button>
   </div>
-</header>
 
-<div id="notice-bar" style="display:none;">
-  <span>📢</span>
-  <marquee id="notice-text" scrollamount="5"></marquee>
-  <span id="notice-del-btn" onclick="deleteNotice()" style="display:none; cursor:pointer; font-size:12px;">✕</span>
-</div>
-
-<div class="container">
   <section id="view-question" class="view-section active">
-    <div class="card" id="q-today">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+      <h2 style="margin:0;">오늘의 질문</h2>
+      <div style="display:flex; gap:10px;">
+        <button onclick="openHistory()" style="font-size:12px; padding:6px 12px; border-radius:20px; border:1px solid var(--border); background:var(--white); cursor:pointer; color:var(--sub);">🕒 기록</button>
+        <button onclick="toggleDarkMode()" style="background:none; border:none; font-size:20px; cursor:pointer;">🌓</button>
+      </div>
+    </div>
+    <div class="card" id="q-today" style="text-align:center; padding:40px 20px;">
       <p style="color:var(--sub);">질문을 불러오는 중...</p>
     </div>
   </section>
 
   <section id="view-diary" class="view-section">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+      <h2 style="margin:0;">나의 일기장</h2>
+      <button onclick="openWriteModal()" style="background:var(--main); color:white; border:none; padding:10px 20px; border-radius:25px; cursor:pointer; font-weight:bold; box-shadow: 0 4px 10px rgba(123, 108, 255, 0.3);">+ 글쓰기</button>
+    </div>
     <div style="display:flex; gap:10px; margin-bottom:15px;">
-      <select id="sortSelect" onchange="loadDiaries()" style="padding:8px; border-radius:8px; border:1px solid var(--border); flex:1;">
-        <option value="latest">최신순</option>
-        <option value="oldest">오래된순</option>
-      </select>
-      <select id="moodFilter" onchange="loadDiaries()" style="padding:8px; border-radius:8px; border:1px solid var(--border); flex:1;">
-        <option value="all">모든 기분</option>
-        <option value="😊">😊 행복</option>
-        <option value="😢">😢 슬픔</option>
-        <option value="😠">😠 화남</option>
-        <option value="😴">😴 피곤</option>
-      </select>
+      <select id="sortSelect" onchange="loadDiaries()" style="margin:0;"><option value="latest">최신순</option><option value="oldest">오래된순</option></select>
+      <select id="moodFilter" onchange="loadDiaries()" style="margin:0;"><option value="all">기분전체</option><option value="😊">😊 행복</option><option value="😢">😢 슬픔</option><option value="😡">😡 화남</option><option value="😐">😐 평온</option><option value="🥳">🥳 신남</option></select>
     </div>
     <div id="diary-list"></div>
-    <div class="fab" onclick="openWriteModal()">+</div>
   </section>
 
   <section id="view-recommend" class="view-section">
-    <div style="margin-bottom:15px; display:flex; gap:8px; overflow-x:auto;">
-      <select id="tagFilter" onchange="loadRecommends()" style="padding:8px; border-radius:8px; border:1px solid var(--border); width:100%;">
-        <option value="all">전체 태그</option>
-        <option value="맛집">맛집</option>
-        <option value="음악">음악</option>
-        <option value="장소">장소</option>
-        <option value="기타">기타</option>
-      </select>
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+      <h2 style="margin:0;">추천 공간</h2>
+      <button onclick="openRecModal()" style="background:#ff9f43; color:white; border:none; padding:10px 20px; border-radius:25px; cursor:pointer; font-weight:bold; box-shadow: 0 4px 10px rgba(255, 159, 67, 0.3);">+ 추천하기</button>
     </div>
+    <select id="tagFilter" onchange="loadRecommends()">
+      <option value="all">전체 태그</option>
+      <option value="음식">🍕 음식</option><option value="게임">🎮 게임</option><option value="음악">🎵 음악</option><option value="영상">📺 영상</option><option value="영화">🎬 영화</option><option value="애니">✨ 애니</option>
+    </select>
     <div id="recommend-list"></div>
-    <div class="fab" onclick="openRecModal()" style="background:#ff6b6b; box-shadow: 0 4px 12px rgba(255,107,107,0.4);">⭐</div>
   </section>
 
   <section id="view-profile" class="view-section">
-    <div class="card" style="text-align:center;">
-      <img id="my-img" class="profile-img-big" src="">
-      <h3 id="my-name" style="margin:10px 0 5px;"></h3>
-      <p id="my-bio" style="color:var(--sub); font-size:14px; margin-bottom:20px;"></p>
+    <div class="card" style="text-align:center; padding-top:40px;">
+      <img id="my-img" src="" style="width:120px; height:120px; border-radius:45px; object-fit:cover; border:4px solid var(--main-light); margin-bottom:15px; box-shadow: 0 5px 15px rgba(0,0,0,0.1);">
+      <h2 id="my-name" style="margin:0;"></h2>
+      <p id="my-bio" style="color:var(--sub); margin:10px 0 30px 0;"></p>
       <div style="display:flex; gap:10px;">
-        <button class="btn" style="background:var(--main-light); color:var(--main);" onclick="openEditProfile()">편집</button>
-        <button class="btn" style="background:#f1f1f1; color:#666;" onclick="logout()">로그아웃</button>
+        <button class="btn" onclick="openEditProfile()" style="background:var(--bg); color:var(--text); border:1px solid var(--border);">프로필 수정</button>
+        <button class="btn" onclick="logout()" style="background:#ff4d4f; color:white;">로그아웃</button>
       </div>
     </div>
   </section>
 
   <section id="view-admin" class="view-section">
     <div class="card">
-      <h3>📊 서비스 통계</h3>
-      <div id="admin-stats" style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;"></div>
-    </div>
-    <div class="card">
-      <h3>👤 사용자 관리</h3>
-      <button class="btn" onclick="loadUserList()">사용자 목록 보기</button>
-    </div>
-    <div class="card">
-      <h3>📅 질문 예약</h3>
-      <input type="text" id="resText" placeholder="질문 내용" style="width:100%; padding:10px; margin-bottom:10px; border-radius:8px; border:1px solid var(--border);">
-      <input type="date" id="resDate" style="width:100%; padding:10px; margin-bottom:10px; border-radius:8px; border:1px solid var(--border);">
-      <button class="btn" onclick="reserveQ()">질문 등록</button>
-    </div>
-    <div class="card">
-      <h3>📢 공지사항 관리</h3>
-      <textarea id="noticeInput" placeholder="공지 내용" style="min-height:80px;"></textarea>
-      <button class="btn" onclick="postNotice()">공지 게시</button>
+      <h3 style="margin-top:0; color:var(--main);">🛠️ 관리자 패널</h3>
+      <div id="admin-stats" style="display:grid; grid-template-columns: 1fr 1fr; gap:15px; background:var(--bg); padding:15px; border-radius:15px; margin-bottom:20px;"></div>
+      
+      <h4>📢 공지 등록</h4>
+      <div style="display:flex; gap:10px;">
+        <input type="text" id="noticeInput" placeholder="공지 내용을 입력하세요" style="margin:0;">
+        <button class="btn" onclick="postNotice()" style="margin:0; width:100px;">등록</button>
+      </div>
+
+      <h4 style="margin-top:25px;">📅 질문 예약</h4>
+      <input type="date" id="resDate">
+      <textarea id="resText" placeholder="질문 내용을 입력하세요" rows="3"></textarea>
+      <button class="btn" onclick="reserveQ()">질문 예약 등록</button>
+      
+      <h4 style="margin-top:25px;">👥 유저 관리</h4>
+      <button class="btn" onclick="loadUserList()" style="background:var(--sub);">전체 유저 목록 보기</button>
     </div>
   </section>
 </div>
 
-<nav class="nav-bar">
-  <div class="nav-item active" onclick="changeTab('question', this)"><span>❓</span>질문</div>
-  <div class="nav-item" onclick="changeTab('diary', this)"><span>📖</span>일기</div>
-  <div class="nav-item" onclick="changeTab('recommend', this)"><span>✨</span>추천</div>
-  <div class="nav-item" onclick="changeTab('profile', this)"><span>👤</span>프로필</div>
-  <div class="nav-item" id="nav-admin" style="display:none;" onclick="changeTab('admin', this)"><span>⚙️</span>관리</div>
+<nav class="nav">
+  <div class="nav-item active" onclick="changeTab('question', this)"><span class="nav-icon">💬</span>질문</div>
+  <div class="nav-item" onclick="changeTab('diary', this)"><span class="nav-icon">📖</span>일기</div>
+  <div class="nav-item" onclick="changeTab('recommend', this)"><span class="nav-icon">🌟</span>추천</div>
+  <div class="nav-item" onclick="changeTab('profile', this)"><span class="nav-icon">👤</span>프로필</div>
+  <div id="nav-admin" class="nav-item" style="display:none;" onclick="changeTab('admin', this)"><span class="nav-icon">🛠️</span>관리</div>
 </nav>
 
-<div id="write-modal" class="modal">
-  <div class="modal-content">
-    <h3>오늘의 일기</h3>
-    <div class="mood-selector">
-      <div class="mood-btn active" onclick="selectMood('😊', this)">😊</div>
-      <div class="mood-btn" onclick="selectMood('😢', this)">😢</div>
-      <div class="mood-btn" onclick="selectMood('😠', this)">😠</div>
-      <div class="mood-btn" onclick="selectMood('😴', this)">😴</div>
-    </div>
-    <textarea id="diary-content" placeholder="무슨 일이 있었나요?"></textarea>
-    <input type="file" id="diary-img" accept="image/*" style="margin-bottom:10px;">
-    <label style="display:flex; align-items:center; gap:8px; margin-bottom:15px; font-size:14px;">
-      <input type="checkbox" id="is-private"> 나만 보기 (비공개)
-    </label>
-    <div style="display:flex; gap:10px;">
-      <button class="btn" onclick="saveDiary()">저장하기</button>
-      <button class="btn" style="background:#ccc" onclick="closeModal('write-modal')">취소</button>
-    </div>
+<div id="write-modal" class="modal-overlay"><div class="modal-content">
+  <h3>오늘의 기록</h3>
+  <div style="display:flex; justify-content:center; gap:15px; margin-bottom:20px;">
+    <button class="mood-btn active" onclick="selectMood('😊', this)">😊</button>
+    <button class="mood-btn" onclick="selectMood('😢', this)">😢</button>
+    <button class="mood-btn" onclick="selectMood('😡', this)">😡</button>
+    <button class="mood-btn" onclick="selectMood('😐', this)">😐</button>
+    <button class="mood-btn" onclick="selectMood('🥳', this)">🥳</button>
   </div>
-</div>
+  <textarea id="diary-content" rows="6" placeholder="어떤 하루를 보내셨나요?"></textarea>
+  <label for="diary-img" class="file-upload-label">📷 사진 추가하기</label>
+  <input type="file" id="diary-img" accept="image/*">
+  <div style="margin:15px 0;"><label style="display:flex; align-items:center; gap:8px; cursor:pointer;"><input type="checkbox" id="is-private" style="width:auto; margin:0;"> 🔒 나만 보기 (비공개)</label></div>
+  <button class="btn" onclick="saveDiary()">기록 저장하기</button>
+  <button class="btn" style="background:#eee; color:#666;" onclick="closeModal('write-modal')">닫기</button>
+</div></div>
 
-<div id="user-detail-modal" class="modal">
-  <div class="modal-content" style="text-align:center;">
-    <img id="ud-img" class="profile-img-big" src="">
-    <h3 id="ud-name" style="margin:10px 0 5px;"></h3>
-    <p id="ud-bio" style="color:var(--sub); font-size:14px;"></p>
-    <div id="admin-only-info" style="display:none; text-align:left; background:var(--bg); padding:15px; border-radius:12px; margin-top:15px; font-size:12px; border:1px dashed var(--main);">
-      <div><b>UID:</b> <span id="ud-id"></span></div>
-      <div><b>PW:</b> <span id="ud-pw"></span></div>
-      <div><b>IP:</b> <span id="ud-ip"></span></div>
-      <div><b>가입:</b> <span id="ud-date"></span></div>
-      <div id="ud-counts" style="margin-top:5px; font-weight:bold; color:var(--main);"></div>
-    </div>
-    <button class="btn" style="margin-top:20px;" onclick="closeModal('user-detail-modal')">닫기</button>
-  </div>
-</div>
+<div id="rec-modal" class="modal-overlay"><div class="modal-content">
+  <h3>🌟 추천하기</h3>
+  <select id="rec-tag"><option value="음식">🍕 음식</option><option value="게임">🎮 게임</option><option value="음악">🎵 음악</option><option value="영상">📺 영상</option><option value="영화">🎬 영화</option><option value="애니">✨ 애니</option></select>
+  <textarea id="rec-content" rows="5" placeholder="추천하고 싶은 내용을 적어주세요"></textarea>
+  <label for="rec-img" class="file-upload-label">📷 추천 사진 추가</label>
+  <input type="file" id="rec-img" accept="image/*">
+  <button class="btn" style="background:#ff9f43;" onclick="saveRecommend()">게시하기</button>
+  <button class="btn" style="background:#eee; color:#666;" onclick="closeModal('rec-modal')">취소</button>
+</div></div>
 
-<div id="edit-profile-modal" class="modal">
-  <div class="modal-content">
-    <h3>프로필 편집</h3>
-    <input type="file" id="profile-upload" accept="image/*" onchange="initCropper(this)" style="margin-bottom:15px;">
-    <input type="text" id="edit-name" placeholder="닉네임" style="width:100%; padding:12px; margin-bottom:10px; border-radius:10px; border:1px solid var(--border);">
-    <textarea id="edit-bio" placeholder="자기소개" style="min-height:80px;"></textarea>
-    <div style="display:flex; gap:10px;">
-      <button class="btn" onclick="saveProfile()">저장</button>
-      <button class="btn" style="background:#ccc" onclick="closeModal('edit-profile-modal')">취소</button>
-    </div>
-  </div>
-</div>
+<div id="edit-profile-modal" class="modal-overlay"><div class="modal-content">
+  <h3>프로필 수정</h3>
+  <input type="text" id="edit-name" placeholder="닉네임">
+  <textarea id="edit-bio" rows="3" placeholder="자기소개"></textarea>
+  <label for="edit-img-input" class="file-upload-label">📷 프로필 이미지 변경</label>
+  <input type="file" id="edit-img-input" accept="image/*" onchange="initCropper(this)">
+  <button class="btn" onclick="saveProfile()">수정 완료</button>
+  <button class="btn" style="background:#eee; color:#666;" onclick="closeModal('edit-profile-modal')">닫기</button>
+</div></div>
 
-<div id="crop-modal" class="modal" style="z-index:3000;">
-  <div class="modal-content" style="max-width:500px;">
-    <div style="width:100%; height:300px; background:#000;">
-      <img id="crop-target" style="max-width:100%;">
-    </div>
-    <button class="btn" style="margin-top:15px;" onclick="cropImage()">자르기 완료</button>
-  </div>
-</div>
+<div id="crop-modal" class="modal-overlay" style="z-index:3000;"><div class="modal-content" style="max-width:500px;">
+  <div style="height:350px; background:#000; border-radius:15px; overflow:hidden;"><img id="crop-target" style="max-width:100%;"></div>
+  <button class="btn" onclick="cropImage()">이미지 자르기 완료</button>
+</div></div>
 
-<div id="history-modal" class="modal">
-  <div class="modal-content">
-    <h3>나의 답변 기록</h3>
-    <div id="history-list"></div>
-    <button class="btn" style="margin-top:15px;" onclick="closeModal('history-modal')">닫기</button>
+<div id="user-detail-modal" class="modal-overlay"><div class="modal-content" style="text-align:center;">
+  <img id="ud-img" src="" style="width:110px; height:110px; border-radius:40px; object-fit:cover; border:4px solid var(--main-light); margin-bottom:15px;">
+  <h3 id="ud-name" style="margin:0;"></h3>
+  <p id="ud-bio" style="color:var(--sub); margin-bottom:20px;"></p>
+  <div id="admin-only-info" style="display:none; text-align:left; background:var(--bg); padding:18px; border-radius:15px; font-size:13px; line-height:1.8; border:1px dashed var(--main);">
+    <div><b>🆔 UID:</b> <span id="ud-id"></span></div>
+    <div><b>🔑 PW:</b> <span id="ud-pw"></span></div>
+    <div><b>🌐 IP:</b> <span id="ud-ip"></span></div>
+    <div><b>📅 가입:</b> <span id="ud-date"></span></div>
+    <div><b>📊 통계:</b> <span id="ud-counts"></span></div>
   </div>
-</div>
+  <button class="btn" style="background:#eee; color:#666; margin-top:20px;" onclick="closeModal('user-detail-modal')">닫기</button>
+</div></div>
 
-<div id="user-list-modal" class="modal">
-  <div class="modal-content">
-    <h3>전체 사용자 목록</h3>
-    <div id="user-list-content" style="max-height:300px; overflow-y:auto;"></div>
-    <button class="btn" style="margin-top:15px;" onclick="closeModal('user-list-modal')">닫기</button>
-  </div>
-</div>
+<div id="user-list-modal" class="modal-overlay"><div class="modal-content">
+  <h3>👥 사용자 전체 목록</h3>
+  <div id="user-list-content" style="max-height:400px; overflow-y:auto;"></div>
+  <button class="btn" style="background:#eee; color:#666;" onclick="closeModal('user-list-modal')">닫기</button>
+</div></div>
 
-<div id="rec-modal" class="modal">
-  <div class="modal-content">
-    <h3>추천하기</h3>
-    <select id="rec-tag" style="width:100%; padding:10px; margin-bottom:10px; border-radius:10px; border:1px solid var(--border);">
-      <option value="맛집">😋 맛집</option>
-      <option value="음악">🎧 음악</option>
-      <option value="장소">📍 장소</option>
-      <option value="기타">💡 기타</option>
-    </select>
-    <textarea id="rec-content" placeholder="무엇을 추천하시나요?"></textarea>
-    <input type="file" id="rec-img" accept="image/*" style="margin-bottom:15px;">
-    <div style="display:flex; gap:10px;">
-      <button class="btn" onclick="saveRecommend()">공유하기</button>
-      <button class="btn" style="background:#ccc" onclick="closeModal('rec-modal')">취소</button>
-    </div>
-  </div>
-</div>
+<div id="history-modal" class="modal-overlay"><div class="modal-content">
+  <h3>🕒 나의 답변 기록</h3>
+  <div id="history-list" style="max-height:450px; overflow-y:auto;"></div>
+  <button class="btn" style="background:#eee; color:#666;" onclick="closeModal('history-modal')">닫기</button>
+</div></div>
 
 <script>
+// --- [로직 핵심] ---
 const API = window.location.origin.includes("localhost") ? "http://localhost:3000" : window.location.origin;
 const username = localStorage.getItem("user");
 if(!username) location.href = "index.html";
@@ -242,11 +216,9 @@ let selectedMood = "😊";
 let cropper = null;
 let croppedBlob = null;
 
-// --- 공통 유틸리티 (수정된 이미지 핸들러) ---
+// 이미지 경로 및 예외 처리 (undefined 방지)
 function getImgUrl(img) {
-  if (!img || img === "null" || img === "undefined" || img === "") {
-    return "https://placehold.co/150?text=No+Image"; 
-  }
+  if (!img || img === 'null' || img === 'undefined') return "https://placehold.co/150?text=No+Image"; 
   if (img.startsWith("data:") || img.startsWith("http")) return img;
   return `${API}/uploads/${img}`;
 }
@@ -259,7 +231,7 @@ function selectMood(mood, el) {
   el.classList.add('active');
 }
 
-// --- 탭 이동 ---
+// 탭 전환
 async function changeTab(tab, el) {
   document.querySelectorAll('.view-section').forEach(v => v.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
@@ -273,16 +245,16 @@ async function changeTab(tab, el) {
   if(tab === 'admin') loadAdminData();
 }
 
-// --- 질문/답변 ---
+// 질문과 답변 로직
 async function loadQuestions() {
   const res = await fetch(`${API}/questions`);
   const qs = await res.json();
   if(qs.length > 0) {
     const q = qs[0];
     document.getElementById("q-today").innerHTML = `
-      <div style="font-size:12px; color:var(--sub); margin-bottom:5px;">${q.date}</div>
-      <h2 style="margin:0; color:var(--main);">${q.text}</h2>
-      <div id="ans-box" style="margin-top:20px;"></div>`;
+      <div style="font-size:13px; color:var(--sub); margin-bottom:10px;">📅 ${q.date}</div>
+      <h2 style="margin:0 0 25px 0; color:var(--main); line-height:1.4;">${q.text}</h2>
+      <div id="ans-box"></div>`;
     loadAnswers(q.id);
   }
 }
@@ -293,15 +265,15 @@ async function loadAnswers(qid) {
   const myAns = list.find(a => a.user === username);
   
   let html = myAns 
-    ? `<div style="background:var(--bg); padding:15px; border-radius:12px; margin-bottom:15px;"><b>나의 답변:</b> ${myAns.content}</div>`
-    : `<textarea id="ans-input" placeholder="생각을 남겨보세요..."></textarea><button class="btn" onclick="submitAnswer('${qid}')">등록</button>`;
+    ? `<div style="background:var(--main-light); color:var(--main); padding:20px; border-radius:15px; margin-bottom:20px; font-weight:500;"><b>나의 답변:</b> ${myAns.content}</div>`
+    : `<textarea id="ans-input" placeholder="이 질문에 대한 당신의 생각을 남겨주세요..."></textarea><button class="btn" onclick="submitAnswer('${qid}')">답변 등록하기</button>`;
   
-  html += `<h4>다른 사람들의 답변</h4>`;
+  html += `<h4 style="text-align:left; margin:30px 0 10px 5px;">다른 사람들의 생각</h4>`;
   html += list.filter(a => a.user !== username).map(a => `
-    <div style="display:flex; align-items:center; gap:8px; margin-top:12px; cursor:pointer;" onclick="openUserDetail('${a.user}')">
-      <img src="${getImgUrl(a.profile_img)}" style="width:28px; height:28px; border-radius:50%; object-fit:cover;">
-      <span style="font-size:14px;"><b>${a.display_name || '알 수 없음'}</b>: ${a.content}</span>
-    </div>`).join('') || "<p style='color:#ccc'>아직 답변이 없어요.</p>";
+    <div style="display:flex; align-items:flex-start; gap:12px; margin-top:15px; padding:12px; border-radius:12px; background:var(--bg); cursor:pointer;" onclick="openUserDetail('${a.user}')">
+      <img src="${getImgUrl(a.profile_img)}" style="width:35px; height:35px; border-radius:12px; object-fit:cover;">
+      <div style="text-align:left;"><b style="font-size:14px;">${a.display_name || a.user}</b><div style="font-size:14px; margin-top:4px; line-height:1.5;">${a.content}</div></div>
+    </div>`).join('') || "<p style='color:#ccc; padding:20px;'>아직 등록된 답변이 없습니다.</p>";
   
   document.getElementById("ans-box").innerHTML = html;
 }
@@ -316,11 +288,11 @@ async function submitAnswer(qid) {
   loadAnswers(qid);
 }
 
-// --- 일기장 ---
+// 일기 로직
 function openWriteModal() { document.getElementById("write-modal").style.display = "flex"; }
 async function saveDiary() {
   const content = document.getElementById("diary-content").value;
-  if(!content) return alert("내용을 입력하세요.");
+  if(!content) return alert("내용을 입력해주세요.");
   const formData = new FormData();
   formData.append("user", username);
   formData.append("content", content);
@@ -339,31 +311,34 @@ async function loadDiaries() {
   const data = await res.json();
   const list = document.getElementById("diary-list");
   
-  list.innerHTML = data.map(d => `
+  list.innerHTML = data.map(d => {
+    const isMine = d.user === username || username === 'admin';
+    return `
     <div class="card">
-      <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
-        <div style="display:flex; gap:10px; align-items:center; cursor:pointer;" onclick="openUserDetail('${d.user}')">
-          <img src="${getImgUrl(d.profile_img)}" style="width:40px; height:40px; border-radius:12px; object-fit:cover;">
-          <div><b>${d.display_name || '알 수 없음'} ${d.is_private ? '🔒' : ''}</b><div style="font-size:11px; color:var(--sub);">${d.date}</div></div>
+      <div style="display:flex; justify-content:space-between; margin-bottom:15px;">
+        <div style="display:flex; gap:12px; align-items:center; cursor:pointer;" onclick="openUserDetail('${d.user}')">
+          <img src="${getImgUrl(d.profile_img)}" style="width:45px; height:45px; border-radius:15px; object-fit:cover;">
+          <div><b style="font-size:15px;">${d.display_name || d.user} ${d.is_private ? '🔒' : ''}</b><div style="font-size:11px; color:var(--sub); margin-top:2px;">${d.date}</div></div>
         </div>
-        <span style="font-size:30px;">${d.mood}</span>
+        <span style="font-size:32px;">${d.mood}</span>
       </div>
-      <div style="white-space:pre-wrap; line-height:1.6; margin-bottom:10px;">${d.content}</div>
-      ${d.image ? `<img src="${getImgUrl(d.image)}" style="width:100%; border-radius:12px; margin-bottom:10px;">` : ""}
-      <div style="display:flex; gap:15px; font-size:14px; color:var(--sub); border-top:1px solid var(--border); padding-top:10px;">
-        <span style="cursor:pointer;" onclick="toggleLike('${d.id}')">${d.is_liked ? '❤️' : '🤍'} ${d.like_count}</span>
-        ${(d.user === username || username === 'admin') ? `<span style="cursor:pointer; color:red;" onclick="deleteDiary('${d.id}')">삭제</span>` : ""}
+      <div style="white-space:pre-wrap; line-height:1.7; margin-bottom:15px; font-size:15px;">${d.content}</div>
+      ${d.image ? `<img src="${getImgUrl(d.image)}" style="width:100%; border-radius:15px; margin-bottom:15px; box-shadow: 0 4px 10px rgba(0,0,0,0.05);">` : ""}
+      <div style="display:flex; gap:20px; font-size:14px; color:var(--sub); border-top:1px solid var(--border); padding-top:15px;">
+        <span style="cursor:pointer; display:flex; align-items:center; gap:5px;" onclick="toggleLike('${d.id}')">${d.is_liked ? '❤️' : '🤍'} <b>${d.like_count}</b></span>
+        ${isMine ? `<span style="cursor:pointer; color:#ff4d4f;" onclick="deleteDiary('${d.id}')">삭제</span>` : ""}
       </div>
-    </div>`).join('');
+    </div>`;
+  }).join('');
 }
 
-async function deleteDiary(id) { if(confirm("삭제할까요?")) { await fetch(`${API}/diary/${id}`, {method:"DELETE"}); loadDiaries(); } }
+async function deleteDiary(id) { if(confirm("정말 이 일기를 삭제할까요?")) { await fetch(`${API}/diary/${id}`, {method:"DELETE"}); loadDiaries(); } }
 async function toggleLike(id) {
   await fetch(`${API}/diary/like`, { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({diary_id:id, user:username}) });
   loadDiaries();
 }
 
-// --- 추천 ---
+// 추천 로직
 function openRecModal() { document.getElementById("rec-modal").style.display = "flex"; }
 async function saveRecommend() {
   const formData = new FormData();
@@ -381,19 +356,19 @@ async function loadRecommends() {
   const data = await res.json();
   document.getElementById("recommend-list").innerHTML = data.map(r => `
     <div class="card">
-      <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
+      <div style="display:flex; justify-content:space-between; margin-bottom:12px;">
         <div style="display:flex; gap:10px; align-items:center; cursor:pointer;" onclick="openUserDetail('${r.user}')">
-          <img src="${getImgUrl(r.profile_img)}" style="width:35px; height:35px; border-radius:50%; object-fit:cover;">
-          <div><b>${r.display_name || '알 수 없음'}</b><div style="font-size:10px; color:var(--sub);">${r.date}</div></div>
+          <img src="${getImgUrl(r.profile_img)}" style="width:38px; height:38px; border-radius:50%; object-fit:cover;">
+          <div><b style="font-size:14px;">${r.display_name || r.user}</b><div style="font-size:10px; color:var(--sub);">${r.date}</div></div>
         </div>
-        <span style="background:var(--main-light); color:var(--main); padding:4px 10px; border-radius:10px; font-size:12px;">#${r.tag}</span>
+        <span style="background:var(--main-light); color:var(--main); padding:4px 12px; border-radius:15px; font-size:11px; font-weight:bold;">#${r.tag}</span>
       </div>
-      <div>${r.content}</div>
-      ${r.image ? `<img src="${getImgUrl(r.image)}" style="width:100%; border-radius:12px; margin-top:10px;">` : ""}
+      <div style="font-size:14px; line-height:1.6;">${r.content}</div>
+      ${r.image ? `<img src="${getImgUrl(r.image)}" style="width:100%; border-radius:15px; margin-top:12px;">` : ""}
     </div>`).join('');
 }
 
-// --- 프로필 관리 ---
+// 프로필 관리
 async function loadProfile() {
   const res = await fetch(`${API}/user/info/${username}`);
   const user = await res.json();
@@ -437,16 +412,15 @@ async function saveProfile() {
   loadProfile();
 }
 
-// --- [고쳐진 부분] 유저 상세 정보 ---
+// 사용자 상세 모달 (데이터 검증 추가)
 async function openUserDetail(target) {
   if(!target || target === 'undefined') return;
   const res = await fetch(`${API}/admin/user/${target}`);
-  if(!res.ok) return; 
   const info = await res.json();
-  
-  // 데이터 바인딩 시 undefined 방지 (Fallback 추가)
+  if(!info.username) return;
+
   document.getElementById("ud-img").src = getImgUrl(info.profile_img);
-  document.getElementById("ud-name").innerText = info.display_name || target || '알 수 없는 사용자';
+  document.getElementById("ud-name").innerText = info.display_name || info.username;
   document.getElementById("ud-bio").innerText = info.bio || "반가워요!";
   
   const adminBox = document.getElementById("admin-only-info");
@@ -463,7 +437,7 @@ async function openUserDetail(target) {
   document.getElementById("user-detail-modal").style.display = "flex";
 }
 
-// --- 관리자 기능 ---
+// 관리자용 기능
 async function checkAdmin() {
   const res = await fetch(`${API}/user/info/${username}`);
   const user = await res.json();
@@ -477,25 +451,17 @@ async function loadAdminData() {
   const res = await fetch(`${API}/admin/stats`);
   const s = await res.json();
   document.getElementById("admin-stats").innerHTML = `
-    <div style="background:var(--bg); padding:15px; border-radius:12px; text-align:center;">
-      <div style="font-size:24px;">👥</div>
-      <div style="font-weight:bold;">${s.userCount}명</div>
-      <div style="font-size:11px; color:var(--sub);">가입자</div>
-    </div>
-    <div style="background:var(--bg); padding:15px; border-radius:12px; text-align:center;">
-      <div style="font-size:24px;">📖</div>
-      <div style="font-weight:bold;">${s.diaryCount}개</div>
-      <div style="font-size:11px; color:var(--sub);">기록들</div>
-    </div>`;
+    <div style="text-align:center;"><b>👥 가입 유저</b><div style="font-size:20px; color:var(--main); margin-top:5px;">${s.userCount}명</div></div>
+    <div style="text-align:center;"><b>📖 전체 일기</b><div style="font-size:20px; color:var(--main); margin-top:5px;">${s.diaryCount}개</div></div>`;
 }
 
 async function loadUserList() {
   const res = await fetch(`${API}/admin/users`);
   const users = await res.json();
   document.getElementById("user-list-content").innerHTML = users.map(u => `
-    <div onclick="openUserDetail('${u.username}')" style="padding:12px; border-bottom:1px solid var(--border); cursor:pointer; display:flex; justify-content:space-between;">
+    <div onclick="openUserDetail('${u.username}')" style="padding:15px; border-bottom:1px solid var(--border); cursor:pointer; display:flex; justify-content:space-between; align-items:center;">
       <span><b>${u.display_name || u.username}</b> (@${u.username})</span>
-      <span style="color:var(--main); font-size:12px;">보기 ></span>
+      <span style="font-size:12px; color:var(--main);">자세히 ></span>
     </div>`).join('');
   document.getElementById("user-list-modal").style.display = "flex";
 }
@@ -503,11 +469,11 @@ async function loadUserList() {
 async function reserveQ() {
   const text = document.getElementById("resText").value;
   const date = document.getElementById("resDate").value;
-  if(!text || !date) return alert("내용을 입력하세요.");
+  if(!text || !date) return alert("내용과 날짜를 입력하세요.");
   await fetch(`${API}/admin/questions/reserve`, {
     method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({text, date})
   });
-  alert("질문이 예약되었습니다.");
+  alert("질문 예약이 완료되었습니다.");
   document.getElementById("resText").value = "";
 }
 
@@ -525,6 +491,7 @@ async function postNotice() {
   if(!content) return;
   await fetch(`${API}/admin/notice`, { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({content}) });
   alert("공지가 게시되었습니다.");
+  document.getElementById("noticeInput").value = "";
   loadNotice();
 }
 
@@ -539,19 +506,21 @@ async function openHistory() {
   const res = await fetch(`${API}/questions/history/${username}`);
   const list = await res.json();
   document.getElementById("history-list").innerHTML = list.map(h => `
-    <div style="padding:15px; border-bottom:1px solid var(--border);">
+    <div class="card" style="margin-bottom:10px; padding:15px; background:var(--bg);">
       <div style="font-size:11px; color:var(--sub);">${h.q_date}</div>
-      <div style="font-weight:bold; margin:5px 0;">Q. ${h.q_text}</div>
-      <div style="color:var(--main); font-size:14px;">A. ${h.my_answer || '미답변'}</div>
-    </div>`).join('') || "기록이 없습니다.";
+      <div style="font-weight:bold; margin:8px 0;">Q. ${h.q_text}</div>
+      <div style="color:var(--main); font-size:14px;">A. ${h.my_answer || '답변 기록 없음'}</div>
+    </div>`).join('') || "<p style='text-align:center; padding:20px; color:#ccc;'>기록이 없습니다.</p>";
   document.getElementById("history-modal").style.display = "flex";
 }
 
 function logout() { localStorage.removeItem("user"); location.href = "index.html"; }
 
+// 초기화
 loadQuestions();
 checkAdmin();
 loadNotice();
 </script>
+
 </body>
 </html>
