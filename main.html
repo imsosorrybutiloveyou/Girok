@@ -86,11 +86,15 @@
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
       <h2 style="margin:0;">오늘의 질문</h2>
       <div>
-        <button onclick="openHistory()" style="font-size:12px; padding:5px 10px; border-radius:15px; border:1px solid var(--border); background:var(--white); cursor:pointer;">🕒 기록</button>
+        <button onclick="openHistory()" style="font-size:12px; padding:5px 10px; border-radius:15px; border:1px solid var(--border); background:var(--white); cursor:pointer;">🕒 과거 기록</button>
         <button onclick="toggleDarkMode()" style="background:none; border:none; font-size:20px; cursor:pointer;">🌙</button>
       </div>
     </div>
-    <div class="card" id="q-today">로딩 중...</div>
+    <div class="card" id="q-today-area">
+        <div id="q-date" style="font-size:12px; color:var(--sub); margin-bottom:5px;"></div>
+        <h2 id="q-text" style="margin:0; color:var(--main); line-height:1.4;">로딩 중...</h2>
+        <div id="ans-box" style="margin-top:20px;"></div>
+    </div>
   </div>
 
   <div id="view-diary" class="view-section">
@@ -304,7 +308,7 @@ async function loadDiaries() {
       const isMine = d.user === username;
       const isAdmin = me.username === 'admin';
       const deleteBtn = (isMine || isAdmin) ? `<button onclick="deleteDiary('${d.id}')" style="color:red; border:none; background:none; cursor:pointer; margin-left:10px;">삭제</button>` : "";
-      const editBtn = isMine ? `<button onclick="openEditDiary('${d.id}', \`${d.content.replace(/`/g, '\\`').replace(/\n/g, '\\n')}\`, '${d.mood}', ${d.is_private})" style="border:none; background:none; color:var(--main); cursor:pointer;">수정</button>` : "";
+      const editBtn = isMine ? `<button onclick="openEditDiary('${d.id}', \`${d.content.replace(/`/g, '\\`').replace(/\n/g, '\\n')}\` contents, '${d.mood}', ${d.is_private})" style="border:none; background:none; color:var(--main); cursor:pointer;">수정</button>` : "";
       
       let footer = "";
       if (d.is_private && !isMine && !isAdmin) {
@@ -449,38 +453,102 @@ async function saveProfile() {
   closeModal('edit-profile-modal'); loadProfile();
 }
 
-// --- 질문/댓글/기타 ---
+// --- 질문/답변 기능 (전면 수정됨) ---
 async function loadQuestions() {
   const res = await fetch(`${API}/questions`);
   const qs = await res.json();
   if(qs.length > 0) {
-    document.getElementById("q-today").innerHTML = `
-      <div style="font-size:12px; color:var(--sub); margin-bottom:5px;">${qs[0].date}</div>
-      <h2 style="margin:0; color:var(--main);">${qs[0].text}</h2>
-      <div id="ans-box" style="margin-top:20px;"></div>`;
-    loadAnswers(qs[0].id);
+    const todayQ = qs[0];
+    document.getElementById("q-date").innerText = todayQ.date;
+    document.getElementById("q-text").innerText = todayQ.text;
+    loadAnswers(todayQ.id);
   }
 }
+
 async function loadAnswers(qid) {
   const res = await fetch(`${API}/answers/${qid}`);
   const list = await res.json();
   const myAns = list.find(a => a.username === username);
-  let html = myAns 
-    ? `<div style="background:var(--bg); padding:15px; border-radius:12px;"><b>나의 답변:</b> ${myAns.content}</div>`
-    : `<textarea id="ans-input" placeholder="당신의 생각을 적어보세요"></textarea><button class="btn" onclick="submitAnswer('${qid}')">답변 등록</button>`;
-  html += list.filter(a => a.username !== username).map(a => `
-    <div style="display:flex; align-items:center; gap:8px; margin-top:12px; cursor:pointer;" onclick="openUserDetail('${a.username}')">
-      <img src="${getImgUrl(a.profile_img)}" style="width:24px; height:24px; border-radius:50%; object-fit:cover;">
-      <span style="font-size:14px;"><b>${a.display_name}</b>: ${a.content}</span>
-    </div>`).join('');
+  
+  // 1. 답변 작성/수정 영역 구성
+  let html = `<div id="ans-input-area" style="margin-bottom:20px; border-bottom:1px solid var(--border); padding-bottom:20px;">`;
+  if (myAns) {
+    html += `
+      <div id="my-answer-container" style="background:var(--main-light); padding:15px; border-radius:15px; border:1px solid var(--main);">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+          <span style="font-weight:bold; color:var(--main); font-size:14px;">나의 답변</span>
+          <button onclick="startEditAnswer(\`${myAns.content.replace(/`/g, '\\`').replace(/\n/g, '\\n')}\`)" 
+                  style="background:none; border:1px solid var(--main); color:var(--main); padding:3px 10px; border-radius:10px; font-size:12px; cursor:pointer;">수정</button>
+        </div>
+        <div id="my-ans-display" style="white-space:pre-wrap; font-size:15px; line-height:1.5;">${myAns.content}</div>
+        <div id="my-ans-edit" style="display:none;">
+          <textarea id="ans-edit-input" style="min-height:80px; margin-bottom:8px;">${myAns.content}</textarea>
+          <div style="display:flex; gap:8px;">
+            <button class="btn" style="margin:0; flex:1;" onclick="submitAnswer('${qid}', true)">수정 완료</button>
+            <button class="btn" style="margin:0; flex:1; background:#ccc;" onclick="cancelEditAnswer()">취소</button>
+          </div>
+        </div>
+      </div>`;
+  } else {
+    html += `
+      <textarea id="ans-input" placeholder="이 질문에 대한 당신의 생각을 자유롭게 적어보세요." style="min-height:80px;"></textarea>
+      <button class="btn" onclick="submitAnswer('${qid}')">답변 등록하기</button>`;
+  }
+  html += `</div>`;
+
+  // 2. 전체 답변 리스트 구성
+  html += `<h3 style="font-size:16px; margin:20px 0 15px 5px;">모든 답변 <span style="color:var(--main);">${list.length}</span></h3>`;
+  
+  if (list.length === 0) {
+    html += `<div style="text-align:center; padding:30px; color:var(--sub);">아직 답변이 없습니다. 첫 번째 답변을 남겨보세요!</div>`;
+  } else {
+    html += list.map(a => `
+      <div class="card" style="padding:15px; margin-bottom:12px; ${a.username === username ? 'border:1px solid var(--main-light);' : ''}">
+        <div style="display:flex; align-items:center; gap:10px; margin-bottom:10px; cursor:pointer;" onclick="openUserDetail('${a.username}')">
+          <img src="${getImgUrl(a.profile_img)}" style="width:32px; height:32px; border-radius:50%; object-fit:cover;">
+          <div>
+            <div style="font-weight:bold; font-size:14px;">${a.display_name} ${a.username === username ? '<span style="color:var(--main); font-size:11px;">(나)</span>' : ''}</div>
+          </div>
+        </div>
+        <div style="white-space:pre-wrap; font-size:14px; line-height:1.5; color:var(--text);">${a.content}</div>
+      </div>
+    `).join('');
+  }
+  
   document.getElementById("ans-box").innerHTML = html;
 }
-async function submitAnswer(qid) {
-  const input = document.getElementById("ans-input");
-  if(!input.value) return;
-  await fetch(`${API}/answer`, { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({question_id:qid, user:username, content: input.value}) });
-  loadAnswers(qid);
+
+function startEditAnswer(content) {
+  document.getElementById('my-ans-display').style.display = 'none';
+  document.getElementById('my-ans-edit').style.display = 'block';
+  document.getElementById('ans-edit-input').value = content;
 }
+
+function cancelEditAnswer() {
+  document.getElementById('my-ans-display').style.display = 'block';
+  document.getElementById('my-ans-edit').style.display = 'none';
+}
+
+async function submitAnswer(qid, isUpdate = false) {
+  const inputId = isUpdate ? "ans-edit-input" : "ans-input";
+  const content = document.getElementById(inputId).value.trim();
+  if(!content) return alert("내용을 입력해주세요.");
+
+  try {
+    const res = await fetch(`${API}/answer`, { 
+      method:"POST", 
+      headers:{"Content-Type":"application/json"}, 
+      body:JSON.stringify({question_id:qid, user:username, content}) 
+    });
+    
+    if(res.ok) {
+      loadAnswers(qid); // 목록 새로고침
+    }
+  } catch (e) {
+    alert("저장에 실패했습니다.");
+  }
+}
+
 async function toggleLike(id) {
   await fetch(`${API}/diary/like`, { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({diary_id:id, user:username}) });
   loadDiaries();
